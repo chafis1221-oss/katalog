@@ -7,6 +7,7 @@ import 'package:katalog/screens/cart_screen.dart';
 import 'package:katalog/screens/kasir_screen.dart';
 import 'package:katalog/screens/calculator_screen.dart';
 import 'package:katalog/screens/product_form_screen.dart';
+import 'package:katalog/screens/status_screen.dart';
 
 void main() {
   runApp(const WarungDigitalApp());
@@ -58,28 +59,22 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
-  void _switchTab(int index) {
-    setState(() => _currentIndex = index);
-  }
-
-  // Screens dibangun di sini agar bisa passing callback ke CartScreen
-  List<Widget> get _screens => [
+  final List<Widget> _screens = [
     const HomeScreen(),
-    CartScreen(onGoToKasir: () => _switchTab(2)),
+    const CartScreen(),
     const KasirScreen(),
     const CalculatorScreen(),
+    const StatusScreen(),
   ];
 
   void _onTabSelected(int index) {
-    // Tab "Tambah" (index 4): push sebagai route, bukan ganti body
+    // Tab "Tambah" (index 4) dibuka sebagai route push
     if (index == 4) {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => const ProductFormScreen()),
       ).then((result) {
-        // Kembali ke tab Produk setelah selesai
         setState(() => _currentIndex = 0);
-
         if (result == true) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -87,13 +82,15 @@ class _MainScreenState extends State<MainScreen> {
               backgroundColor: Colors.green,
             ),
           );
-          context.read<ProductProvider>().fetchAllProducts();
         }
+        context.read<ProductProvider>().fetchAllProducts();
       });
       return;
     }
 
-    setState(() => _currentIndex = index);
+    setState(() {
+      _currentIndex = index;
+    });
   }
 
   @override
@@ -128,6 +125,11 @@ class _MainScreenState extends State<MainScreen> {
             icon: Icon(Icons.add_box),
             selectedIcon: Icon(Icons.add_box, color: Colors.teal),
             label: 'Tambah',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.monitor_heart),
+            selectedIcon: Icon(Icons.monitor_heart, color: Colors.teal),
+            label: 'Status',
           ),
         ],
       ),
