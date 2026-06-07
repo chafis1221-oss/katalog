@@ -68,13 +68,16 @@ class _MainScreenState extends State<MainScreen> {
   ];
 
   void _onTabSelected(int index) {
-    // Tab "Tambah" (index 4) dibuka sebagai route push
+    // Tab "Tambah" dibuka sebagai halaman terpisah
     if (index == 4) {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => const ProductFormScreen()),
+        MaterialPageRoute(
+          builder: (_) => const ProductFormScreen(),
+        ),
       ).then((result) {
         setState(() => _currentIndex = 0);
+
         if (result == true) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -83,8 +86,10 @@ class _MainScreenState extends State<MainScreen> {
             ),
           );
         }
+
         context.read<ProductProvider>().fetchAllProducts();
       });
+
       return;
     }
 
@@ -107,8 +112,12 @@ class _MainScreenState extends State<MainScreen> {
             label: 'Produk',
           ),
           NavigationDestination(
-            icon: Badge(child: Icon(Icons.shopping_cart)),
-            selectedIcon: Badge(child: Icon(Icons.shopping_cart, color: Colors.teal)),
+            icon: Badge(
+              child: Icon(Icons.shopping_cart),
+            ),
+            selectedIcon: Badge(
+              child: Icon(Icons.shopping_cart, color: Colors.teal),
+            ),
             label: 'Keranjang',
           ),
           NavigationDestination(
