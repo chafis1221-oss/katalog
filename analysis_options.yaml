@@ -1,0 +1,32 @@
+include: package:flutter_lints/flutter.yaml
+
+linter:
+  rules:
+    # Biarkan yang penting saja
+    - avoid_print: false                    # Boleh print untuk debugging
+    - avoid_unnecessary_containers: true    # Container tidak perlu
+    - prefer_const_constructors: true       # Widget const kalau bisa
+    - prefer_const_literals_to_create_immutables: true
+    - use_key_in_widget_constructors: true  # Setiap widget pakai key
+    - sort_child_properties_last: true      # Properti anak di akhir
+    - prefer_final_locals: true             # Variabel local pakai final
+    - unnecessary_null_comparison: true     # Hapus null check tidak perlu
+    - avoid_types_on_closure_parameters: false # Boleh tipe di closure
+
+    # Dinonaktifkan (biar tidak galak)
+    - constant_identifier_names: false
+    - non_constant_identifier_names: false
+    - prefer_single_quotes: false           # Bebas pakai single/double quotes
+    - public_member_api_docs: false         # Tidak wajib dokumentasi API
+
+analyzer:
+  errors:
+    # Jangan dianggap error, cukup warning
+    missing_return: warning
+    dead_code: warning
+    unused_import: warning
+    unused_local_variable: warning
+
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
