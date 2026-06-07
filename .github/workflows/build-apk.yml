@@ -1,3 +1,4 @@
+
 name: Build Android APK
 
 on:
@@ -34,25 +35,17 @@ jobs:
           sed -i 's/<application/<uses-permission android:name="android.permission.INTERNET"\/>\n    <uses-permission android:name="android.permission.CAMERA"\/>\n    <application/' android/app/src/main/AndroidManifest.xml
           sed -i 's/<application/<application android:usesCleartextTraffic="true"/' android/app/src/main/AndroidManifest.xml
 
+      - name: Copy signing key
+        run: cp android/app/release-key.jks android/app/release-key.jks 2>/dev/null || echo "Key already in place"
+
       - name: Get dependencies
         run: flutter pub get
 
-      - name: Convert JPG to PNG icon
+      - name: Build APK release (signed)
         run: |
-          sudo apt-get install -y imagemagick
-          convert assets/icon.jpg -resize 1024x1024 assets/icon.png
-          
-      - name: Generate app launcher icons
-        run: |
-          flutter pub add --dev flutter_launcher_icons
-          echo "flutter_launcher_icons:" >> pubspec.yaml
-          echo "  android: true" >> pubspec.yaml
-          echo "  ios: false" >> pubspec.yaml
-          echo "  image_path: 'assets/icon.png'" >> pubspec.yaml
-          flutter pub run flutter_launcher_icons
-
-      - name: Build APK release
-        run: flutter build apk --release
+          flutter build apk --release \
+            --build-name=1.0.${{ github.run_number }} \
+            --build-number=${{ github.run_number }}
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
