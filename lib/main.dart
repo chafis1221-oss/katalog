@@ -58,23 +58,28 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
-  // ✅ Hanya 4 tab yang jadi body langsung
-  final List<Widget> _screens = [
+  void _switchTab(int index) {
+    setState(() => _currentIndex = index);
+  }
+
+  // Screens dibangun di sini agar bisa passing callback ke CartScreen
+  List<Widget> get _screens => [
     const HomeScreen(),
-    const CartScreen(),
+    CartScreen(onGoToKasir: () => _switchTab(2)),
     const KasirScreen(),
     const CalculatorScreen(),
   ];
 
   void _onTabSelected(int index) {
-    // ✅ Tab "Tambah" (index 4) tidak ada di list, kita push sebagai route
+    // Tab "Tambah" (index 4): push sebagai route, bukan ganti body
     if (index == 4) {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => const ProductFormScreen()),
       ).then((result) {
-        // Kembalikan tab ke "Produk" (index 0)
+        // Kembali ke tab Produk setelah selesai
         setState(() => _currentIndex = 0);
+
         if (result == true) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -82,16 +87,13 @@ class _MainScreenState extends State<MainScreen> {
               backgroundColor: Colors.green,
             ),
           );
+          context.read<ProductProvider>().fetchAllProducts();
         }
-        // Refresh daftar produk
-        context.read<ProductProvider>().fetchAllProducts();
       });
       return;
     }
 
-    setState(() {
-      _currentIndex = index;
-    });
+    setState(() => _currentIndex = index);
   }
 
   @override

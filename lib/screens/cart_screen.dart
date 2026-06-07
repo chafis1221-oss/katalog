@@ -3,10 +3,11 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:katalog/providers/cart_provider.dart';
 import 'package:katalog/widgets/cart_item_tile.dart';
-import 'package:katalog/screens/kasir_screen.dart';
 
 class CartScreen extends StatelessWidget {
-  const CartScreen({super.key});
+  final VoidCallback? onGoToKasir;
+
+  const CartScreen({super.key, this.onGoToKasir});
 
   @override
   Widget build(BuildContext context) {
@@ -101,12 +102,7 @@ class CartScreen extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                   child: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const KasirScreen()),
-                      );
-                    },
+                    onPressed: onGoToKasir,
                     icon: const Icon(Icons.payment),
                     label: const Text('Lanjut Bayar'),
                     style: ElevatedButton.styleFrom(

@@ -14,6 +14,8 @@ class KasirScreen extends StatefulWidget {
 class _KasirScreenState extends State<KasirScreen> {
   String _cashInput = '';
 
+  static const int _maxDigits = 12;
+
   int get cashAmount => int.tryParse(_cashInput) ?? 0;
   int get changeAmount => cashAmount - context.read<CartProvider>().total.toInt();
   bool get canPay => cashAmount >= context.read<CartProvider>().total && context.read<CartProvider>().items.isNotEmpty;
@@ -25,9 +27,13 @@ class _KasirScreenState extends State<KasirScreen> {
           _cashInput = _cashInput.substring(0, _cashInput.length - 1);
         }
       } else if (key == '000') {
-        _cashInput += '000';
+        if (_cashInput.length + 3 <= _maxDigits) {
+          _cashInput += '000';
+        }
       } else {
-        _cashInput += key;
+        if (_cashInput.length < _maxDigits) {
+          _cashInput += key;
+        }
       }
     });
   }

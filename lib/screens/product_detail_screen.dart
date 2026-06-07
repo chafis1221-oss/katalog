@@ -35,11 +35,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     });
     try {
       final product = await _apiService.getProductById(widget.productId);
+      if (!mounted) return;
       setState(() {
         _product = product;
         _isLoading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _error = e.toString();
         _isLoading = false;
@@ -52,10 +54,18 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     try {
       await _apiService.updateProduct(
         _product!.id,
-        {'is_available': !_product!.isAvailable},
+        {
+          'name': _product!.name,
+          'description': _product!.description ?? '',
+          'price': _product!.price,
+          'image_url': _product!.imageUrl,
+          'is_available': !_product!.isAvailable,
+        },
       );
+      if (!mounted) return;
       _loadProduct();
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Gagal: $e'), backgroundColor: Colors.red),
       );
@@ -81,8 +91,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     if (confirm == true && _product != null) {
       try {
         await _apiService.deleteProduct(_product!.id);
-        if (mounted) Navigator.pop(context, true);
+        if (!mounted) return;
+        Navigator.pop(context, true);
       } catch (e) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Gagal hapus: $e'), backgroundColor: Colors.red),
         );
