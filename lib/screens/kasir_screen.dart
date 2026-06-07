@@ -14,9 +14,7 @@ class KasirScreen extends StatefulWidget {
 class _KasirScreenState extends State<KasirScreen> {
   String _cashInput = '';
 
-  static const int _maxDigits = 12;
-
-  int get cashAmount => int.tryParse(_cashInput) ?? 0;
+  int get cashAmount => int.tryParse(_cashInput.replaceAll('.', '')) ?? 0;
   int get changeAmount => cashAmount - context.read<CartProvider>().total.toInt();
   bool get canPay => cashAmount >= context.read<CartProvider>().total && context.read<CartProvider>().items.isNotEmpty;
 
@@ -27,13 +25,9 @@ class _KasirScreenState extends State<KasirScreen> {
           _cashInput = _cashInput.substring(0, _cashInput.length - 1);
         }
       } else if (key == '000') {
-        if (_cashInput.length + 3 <= _maxDigits) {
-          _cashInput += '000';
-        }
+        _cashInput += '000';
       } else {
-        if (_cashInput.length < _maxDigits) {
-          _cashInput += key;
-        }
+        _cashInput += key;
       }
     });
   }
@@ -79,8 +73,8 @@ class _KasirScreenState extends State<KasirScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(fontWeight: isBold ? FontWeight.bold : FontWeight.normal)),
-          Text(value, style: TextStyle(fontWeight: isBold ? FontWeight.bold : FontWeight.normal)),
+          Text(label, style: TextStyle(fontWeight: isBold ? FontWeight.bold : FontWeight.normal, fontSize: 16)),
+          Text(value, style: TextStyle(fontWeight: isBold ? FontWeight.bold : FontWeight.normal, fontSize: 16)),
         ],
       ),
     );
@@ -94,9 +88,10 @@ class _KasirScreenState extends State<KasirScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Kasir')),
       body: cart.items.isEmpty
-          ? const Center(child: Text('Keranjang kosong'))
+          ? const Center(child: Text('Keranjang kosong', style: TextStyle(fontSize: 18)))
           : Column(
               children: [
+                // Daftar item
                 Expanded(
                   child: ListView.builder(
                     padding: const EdgeInsets.all(12),
@@ -112,28 +107,42 @@ class _KasirScreenState extends State<KasirScreen> {
                   ),
                 ),
                 const Divider(height: 1),
+                // Total
                 Padding(
                   padding: const EdgeInsets.all(16),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text('Total', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-                      Text(priceFormat.format(cart.total), style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary)),
+                      Text(
+                        priceFormat.format(cart.total),
+                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary),
+                      ),
                     ],
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: TextField(
-                    enabled: false,
-                    decoration: InputDecoration(
-                      labelText: 'Uang Tunai',
-                      hintText: '0',
-                      suffix: Text(priceFormat.format(cashAmount), style: const TextStyle(fontSize: 18)),
-                    ),
-                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                // ✅ Input uang tunai - TAMPILAN ANGKA DIPERBAIKI
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey[300]!),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Uang Tunai', style: TextStyle(fontSize: 14, color: Colors.grey)),
+                      const SizedBox(height: 8),
+                      Text(
+                        _cashInput.isEmpty ? 'Rp 0' : priceFormat.format(cashAmount),
+                        style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+                      ),
+                    ],
                   ),
                 ),
+                // Kembalian
                 if (_cashInput.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -142,16 +151,22 @@ class _KasirScreenState extends State<KasirScreen> {
                       children: [
                         const Text('Kembalian', style: TextStyle(fontSize: 16)),
                         Text(
-                          priceFormat.format(changeAmount > 0 ? changeAmount : 0),
-                          style: TextStyle(fontSize: 16, color: changeAmount >= 0 ? Colors.green : Colors.red),
+                          changeAmount >= 0 ? priceFormat.format(changeAmount) : 'Uang kurang',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: changeAmount >= 0 ? Colors.green : Colors.red,
+                          ),
                         ),
                       ],
                     ),
                   ),
+                // Keypad
                 CalculatorKeypad(
                   showOperators: false,
                   onKeyPress: _onKeyPress,
                 ),
+                // Tombol bayar
                 Padding(
                   padding: const EdgeInsets.all(16),
                   child: ElevatedButton.icon(

@@ -38,13 +38,11 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
 
   void _calculate() {
     try {
-      // Ganti simbol operator agar bisa di-evaluasi
       String expr = _expression
           .replaceAll('×', '*')
           .replaceAll('÷', '/')
           .replaceAll('%', '/100');
 
-      // Evaluasi ekspresi matematika
       double result = _evaluate(expr);
       String resultStr = result.toStringAsFixed(result.truncateToDouble() == result ? 0 : 2);
 
@@ -58,14 +56,11 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   }
 
   double _evaluate(String expr) {
-    // Parser sederhana: pisahkan operator dan angka, hitung bertahap
-    // Hanya mendukung +, -, *, / dan kurung
     final sanitized = expr.replaceAll(RegExp(r'[^0-9+\-*/().]'), '');
     return _parseExpression(sanitized);
   }
 
   double _parseExpression(String expr) {
-    // Gunakan recursive descent parser sederhana
     return _parseAddSub(expr.replaceAll(' ', ''));
   }
 
@@ -125,11 +120,72 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     return 0;
   }
 
+  void _showHistory() {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) {
+        return Container(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Riwayat', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  Row(
+                    children: [
+                      TextButton(
+                        onPressed: () {
+                          setState(() => _history.clear());
+                          Navigator.pop(ctx);
+                        },
+                        child: const Text('Hapus Semua'),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.pop(ctx),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const Divider(),
+              Flexible(
+                child: _history.isEmpty
+                    ? const Center(child: Text('Belum ada riwayat'))
+                    : ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: _history.length,
+                        itemBuilder: (_, i) => ListTile(
+                          title: Text(_history[i]),
+                          onTap: () {
+                            _history.removeAt(i);
+                            setState(() {});
+                          },
+                        ),
+                      ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Kalkulator'),
+        actions: [
+          // ✅ Tombol riwayat
+          IconButton(
+            icon: const Icon(Icons.history),
+            tooltip: 'Lihat Riwayat',
+            onPressed: _showHistory,
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -143,25 +199,17 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                // Ekspresi (jika ada)
                 if (_expression.isNotEmpty)
                   Text(
                     _expression,
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey[600],
-                    ),
+                    style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                 const SizedBox(height: 8),
-                // Hasil / display utama
                 Text(
                   _display,
-                  style: const TextStyle(
-                    fontSize: 40,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -169,39 +217,13 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
             ),
           ),
           const Divider(height: 1),
-          // Keypad
+          // Keypad penuh tanpa riwayat
           Expanded(
             child: CalculatorKeypad(
               showOperators: true,
               onKeyPress: _onKeyPress,
             ),
           ),
-          // Riwayat
-          if (_history.isNotEmpty)
-            Container(
-              height: 80,
-              color: Colors.grey[100],
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                itemCount: _history.length,
-                itemBuilder: (context, index) {
-                  return Card(
-                    color: Colors.white,
-                    margin: const EdgeInsets.only(right: 8),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      child: Center(
-                        child: Text(
-                          _history[index],
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
         ],
       ),
     );
