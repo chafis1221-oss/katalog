@@ -25,21 +25,6 @@ class WarungDigitalApp extends StatelessWidget {
       child: MaterialApp(
         title: 'Warung Digital',
         debugShowCheckedModeBanner: false,
-        // ✅ Tampilkan error di layar, jangan hitam polos
-        builder: (context, child) {
-          ErrorWidget.builder = (FlutterErrorDetails details) {
-            return Container(
-              color: Colors.yellow,
-              child: Center(
-                child: Text(
-                  'Error: ${details.exception}',
-                  style: const TextStyle(color: Colors.red),
-                ),
-              ),
-            );
-          };
-          return child ?? const SizedBox();
-        },
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(
             seedColor: Colors.teal,
@@ -73,13 +58,41 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
+  // ✅ Hanya 4 tab yang jadi body langsung
   final List<Widget> _screens = [
     const HomeScreen(),
     const CartScreen(),
     const KasirScreen(),
     const CalculatorScreen(),
-    const ProductFormScreen(),
   ];
+
+  void _onTabSelected(int index) {
+    // ✅ Tab "Tambah" (index 4) tidak ada di list, kita push sebagai route
+    if (index == 4) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const ProductFormScreen()),
+      ).then((result) {
+        // Kembalikan tab ke "Produk" (index 0)
+        setState(() => _currentIndex = 0);
+        if (result == true) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Produk berhasil ditambahkan'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+        // Refresh daftar produk
+        context.read<ProductProvider>().fetchAllProducts();
+      });
+      return;
+    }
+
+    setState(() {
+      _currentIndex = index;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -87,11 +100,7 @@ class _MainScreenState extends State<MainScreen> {
       body: _screens[_currentIndex],
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
-        onDestinationSelected: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
+        onDestinationSelected: _onTabSelected,
         destinations: const [
           NavigationDestination(
             icon: Icon(Icons.store),
