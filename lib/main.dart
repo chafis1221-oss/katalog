@@ -59,25 +59,24 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
+  // ✅ 6 elemen (indeks 0-5), sesuai jumlah tab
   final List<Widget> _screens = [
-    const HomeScreen(),
-    const CartScreen(),
-    const KasirScreen(),
-    const CalculatorScreen(),
-    const StatusScreen(),
+    const HomeScreen(),          // 0 - Produk
+    const CartScreen(),          // 1 - Keranjang
+    const KasirScreen(),         // 2 - Kasir
+    const CalculatorScreen(),    // 3 - Kalkulator
+    const SizedBox(),            // 4 - placeholder (Tambah via push)
+    const StatusScreen(),        // 5 - Status
   ];
 
   void _onTabSelected(int index) {
-    // Tab "Tambah" dibuka sebagai halaman terpisah
+    // Tab "Tambah" (index 4) dibuka sebagai route push
     if (index == 4) {
       Navigator.push(
         context,
-        MaterialPageRoute(
-          builder: (_) => const ProductFormScreen(),
-        ),
+        MaterialPageRoute(builder: (_) => const ProductFormScreen()),
       ).then((result) {
         setState(() => _currentIndex = 0);
-
         if (result == true) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -86,10 +85,8 @@ class _MainScreenState extends State<MainScreen> {
             ),
           );
         }
-
         context.read<ProductProvider>().fetchAllProducts();
       });
-
       return;
     }
 
@@ -112,12 +109,8 @@ class _MainScreenState extends State<MainScreen> {
             label: 'Produk',
           ),
           NavigationDestination(
-            icon: Badge(
-              child: Icon(Icons.shopping_cart),
-            ),
-            selectedIcon: Badge(
-              child: Icon(Icons.shopping_cart, color: Colors.teal),
-            ),
+            icon: Badge(child: Icon(Icons.shopping_cart)),
+            selectedIcon: Badge(child: Icon(Icons.shopping_cart, color: Colors.teal)),
             label: 'Keranjang',
           ),
           NavigationDestination(
