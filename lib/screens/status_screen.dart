@@ -52,13 +52,17 @@ class _StatusScreenState extends State<StatusScreen> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['success'] == true) {
-          _panelBagus = data['data']['panel_bagus'];
+          setState(() {
+            _panelBagus = data['data']['panel_bagus'];
+          });
         }
       }
       _latencyBagus = stopwatch.elapsedMilliseconds;
     } catch (_) {
-      _panelBagus = {'status': 'gagal tersambung'};
-      _latencyBagus = null;
+      setState(() {
+        _panelBagus = {'status': 'gagal tersambung'};
+        _latencyBagus = null;
+      });
     }
   }
 
@@ -72,42 +76,18 @@ class _StatusScreenState extends State<StatusScreen> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['success'] == true) {
-          _panelJelek = data['data'];
+          setState(() {
+            _panelJelek = data['data'];
+          });
         }
       }
       _latencyJelek = stopwatch.elapsedMilliseconds;
     } catch (_) {
-      _panelJelek = {'status': 'gagal tersambung'};
-      _latencyJelek = null;
+      setState(() {
+        _panelJelek = {'status': 'gagal tersambung'};
+        _latencyJelek = null;
+      });
     }
-  }
-
-  // ✅ Fungsi ping khusus untuk test latency saja
-  Future<void> _pingTest() async {
-    setState(() {
-      _latencyBagus = null;
-      _latencyJelek = null;
-    });
-
-    // Ping Panel Bagus
-    final sw1 = Stopwatch()..start();
-    try {
-      await http.get(Uri.parse(ApiConfig.healthUrl)).timeout(const Duration(seconds: 5));
-      _latencyBagus = sw1.elapsedMilliseconds;
-    } catch (_) {
-      _latencyBagus = null;
-    }
-
-    // Ping Panel Jelek
-    final sw2 = Stopwatch()..start();
-    try {
-      await http.get(Uri.parse('${ApiConfig.imageBaseUrl}/health')).timeout(const Duration(seconds: 5));
-      _latencyJelek = sw2.elapsedMilliseconds;
-    } catch (_) {
-      _latencyJelek = null;
-    }
-
-    setState(() {});
   }
 
   @override
@@ -117,13 +97,7 @@ class _StatusScreenState extends State<StatusScreen> {
         title: const Text('Status Server'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.speed),
-            tooltip: 'Ping Test',
-            onPressed: _pingTest,
-          ),
-          IconButton(
             icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh',
             onPressed: _fetchAll,
           ),
         ],
@@ -136,56 +110,46 @@ class _StatusScreenState extends State<StatusScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                      const SizedBox(height: 8),
                       Text(_error!),
                       const SizedBox(height: 12),
                       ElevatedButton(onPressed: _fetchAll, child: const Text('Coba Lagi')),
                     ],
                   ),
                 )
-              : RefreshIndicator(
-                  onRefresh: _fetchAll,
-                  child: ListView(
-                    padding: const EdgeInsets.all(16),
-                    children: [
-                      _buildPanelCard('🧠 Otak Utama', _panelBagus, _latencyBagus),
+              : ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    _cardPanel('🧠 Otak Utama', _panelBagus, _latencyBagus),
+                    const SizedBox(height: 12),
+                    _cardPanel('🗄️ Otak Penyimpanan Gambar', _panelJelek, _latencyJelek),
+                    if (_panelBagus != null && _panelBagus!['system'] != null) ...[
                       const SizedBox(height: 12),
-                      _buildPanelCard('🗄️ Otak Penyimpanan Gambar', _panelJelek, _latencyJelek),
+                      _cardSpec('🖥️ CPU Otak Utama', _panelBagus!['system']['cpu']),
                       const SizedBox(height: 12),
-                      if (_panelBagus != null && _panelBagus!['status'] != 'gagal tersambung') ...[
-                        _buildSpecCard('🖥️ CPU Otak Utama', _panelBagus!['system']?['cpu']),
-                        const SizedBox(height: 12),
-                        _buildSpecCard('💾 RAM Otak Utama', _panelBagus!['system']?['ram']),
-                        const SizedBox(height: 12),
-                        _buildSpecCard('📦 Storage Otak Utama', _panelBagus!['system']?['storage']),
-                        const SizedBox(height: 12),
-                        _buildCard('🗄️ Database', [
-                          _row('Status', _panelBagus!['database']?['status'] ?? '?'),
-                          _row('Ukuran', _panelBagus!['database']?['size'] ?? '?'),
-                        ]),
-                      ],
-                      if (_panelJelek != null && _panelJelek!['status'] != 'gagal tersambung') ...[
-                        const SizedBox(height: 12),
-                        _buildSpecCard('🖥️ CPU Otak Penyimpanan', _panelJelek!['system']?['cpu']),
-                        const SizedBox(height: 12),
-                        _buildSpecCard('💾 RAM Otak Penyimpanan', _panelJelek!['system']?['ram']),
-                        const SizedBox(height: 12),
-                        _buildSpecCard('📦 Storage Otak Penyimpanan', _panelJelek!['system']?['storage']),
-                        const SizedBox(height: 12),
-                        _buildCard('🖼️ Gambar Tersimpan', [
-                          _row('Jumlah', '${_panelJelek!['images']?['count'] ?? '?'} file'),
-                          _row('Path', _panelJelek!['images']?['path'] ?? '?'),
-                        ]),
-                      ],
+                      _cardSpec('💾 RAM Otak Utama', _panelBagus!['system']['ram']),
+                      const SizedBox(height: 12),
+                      _cardSpec('📦 Storage Otak Utama', _panelBagus!['system']['storage']),
                     ],
-                  ),
+                    if (_panelJelek != null && _panelJelek!['system'] != null) ...[
+                      const SizedBox(height: 12),
+                      _cardSpec('🖥️ CPU Otak Penyimpanan', _panelJelek!['system']['cpu']),
+                      const SizedBox(height: 12),
+                      _cardSpec('💾 RAM Otak Penyimpanan', _panelJelek!['system']['ram']),
+                      const SizedBox(height: 12),
+                      _cardSpec('📦 Storage Otak Penyimpanan', _panelJelek!['system']['storage']),
+                      const SizedBox(height: 12),
+                      _cardGambar(_panelJelek!['images']),
+                    ],
+                  ],
                 ),
     );
   }
 
-  Widget _buildPanelCard(String title, Map<String, dynamic>? data, int? latency) {
-    final isRunning = data != null && data['status'] != 'gagal tersambung';
+  Widget _cardPanel(String title, Map<String, dynamic>? data, int? latency) {
+    final online = data != null && data['status'] == 'running';
     return Card(
-      color: isRunning ? Colors.green.withOpacity(0.05) : Colors.red.withOpacity(0.05),
+      color: online ? Colors.green.withOpacity(0.05) : Colors.red.withOpacity(0.05),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -193,26 +157,25 @@ class _StatusScreenState extends State<StatusScreen> {
           children: [
             Row(
               children: [
-                Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                const Spacer(),
+                Expanded(child: Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold))),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: isRunning ? Colors.green : Colors.red,
+                    color: online ? Colors.green : Colors.red,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    isRunning ? 'ONLINE' : 'OFFLINE',
-                    style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                    online ? 'ONLINE' : 'OFFLINE',
+                    style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
                   ),
                 ),
               ],
             ),
-            if (isRunning) ...[
+            if (online) ...[
               const SizedBox(height: 8),
-              _row('Versi', data!['version'] ?? '?'),
-              _row('Uptime', data['uptime'] ?? '?'),
-              _row('Latensi', latency != null ? '$latency ms' : 'Gagal'),
+              _row('Versi', data!['version']?.toString() ?? '?'),
+              _row('Uptime', data['uptime']?.toString() ?? '?'),
+              _row('Latensi', latency != null ? '$latency ms' : '?'),
             ],
           ],
         ),
@@ -220,29 +183,44 @@ class _StatusScreenState extends State<StatusScreen> {
     );
   }
 
-  Widget _buildSpecCard(String title, Map<String, dynamic>? data) {
+  Widget _cardSpec(String title, Map<String, dynamic>? data) {
     if (data == null) return const SizedBox();
-    return _buildCard(title, [
-      if (data['model'] != null) _row('Model', data['model']),
-      if (data['cores'] != null) _row('Core', '${data['cores']}'),
-      if (data['usage'] != null) _row('Usage', data['usage']),
-      if (data['total'] != null) _row('Total', data['total']),
-      if (data['used'] != null) _row('Used', data['used']),
-      if (data['free'] != null) _row('Free', data['free']),
-      if (data['usagePercent'] != null) _row('Usage %', data['usagePercent']),
-    ]);
-  }
-
-  Widget _buildCard(String title, List<Widget> children) {
+    final items = <MapEntry<String, String>>[];
+    if (data['model'] != null) items.add(MapEntry('Model', data['model'].toString()));
+    if (data['cores'] != null) items.add(MapEntry('Core', data['cores'].toString()));
+    if (data['usage'] != null) items.add(MapEntry('Usage', data['usage'].toString()));
+    if (data['total'] != null) items.add(MapEntry('Total', data['total'].toString()));
+    if (data['used'] != null) items.add(MapEntry('Used', data['used'].toString()));
+    if (data['free'] != null) items.add(MapEntry('Free', data['free'].toString()));
+    if (data['usagePercent'] != null) items.add(MapEntry('Usage %', data['usagePercent'].toString()));
+    if (items.isEmpty) return const SizedBox();
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            ...children,
+            ...items.map((e) => _row(e.key, e.value)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _cardGambar(Map<String, dynamic>? data) {
+    if (data == null) return const SizedBox();
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('🖼️ Gambar Tersimpan', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            _row('Jumlah', '${data['count'] ?? '?'} file'),
+            _row('Path', data['path']?.toString() ?? '?'),
           ],
         ),
       ),
@@ -255,8 +233,8 @@ class _StatusScreenState extends State<StatusScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(color: Colors.grey[600])),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.w500)),
+          Text(label, style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13)),
         ],
       ),
     );
