@@ -17,69 +17,47 @@ jobs:
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
-          java-version: '17'
+          distribution: temurin
+          java-version: "17"
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.22.0'
-          channel: 'stable'
+          flutter-version: "3.22.0"
+          channel: stable
 
-      - name: Set build number (auto)
+      - name: Restore dependencies
+        run: flutter pub get
+
+      # Auto version biar gak ribet
+      - name: Set build number
         run: |
           sed -i "s/version: .*/version: 1.0.${{ github.run_number }}+${{ github.run_number }}/" pubspec.yaml
 
-      - name: Create Android platform (only if not exists)
+      # Pastikan Android folder ada
+      - name: Verify Android project
         run: |
-          if [ ! -d "android" ]; then
-            flutter create --platforms android --project-name katalog .
+          if [ ! -f "android/app/src/main/AndroidManifest.xml" ]; then
+            echo "AndroidManifest.xml missing!"
+            exit 1
           fi
 
-      - name: Add internet permission
-        run: |
-          if ! grep -q "INTERNET" android/app/src/main/AndroidManifest.xml; then
-            sed -i 's/<application/<uses-permission android:name="android.permission.INTERNET"\/>\n    <uses-permission android:name="android.permission.CAMERA"\/>\n    <application/' android/app/src/main/AndroidManifest.xml
-          fi
-          if ! grep -q "usesCleartextTraffic" android/app/src/main/AndroidManifest.xml; then
-            sed -i 's/<application/<application android:usesCleartextTraffic="true"/' android/app/src/main/AndroidManifest.xml
-          fi
-
+      # Decode keystore (FIXED VERSION)
       - name: Decode Keystore
         run: |
+          mkdir -p android/app
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/release-key.jks
 
-      - name: Convert logo to PNG icon
-        run: |
-          sudo apt-get install -y imagemagick
-          convert assets/icon.jpg -resize 1024x1024 assets/icon.png
-
-      - name: Generate app launcher icons
-        run: |
-          flutter pub add --dev flutter_launcher_icons
-          cat >> pubspec.yaml << 'EOF'
-          flutter_launcher_icons:
-            android: true
-            ios: false
-            image_path: 'assets/icon.png'
-          EOF
-          flutter pub run flutter_launcher_icons
-
-      - name: Get dependencies
-        run: flutter pub get
-
-      - name: Build APK release (signed)
-        env:
-          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+      # Build APK release signed
+      - name: Build APK
         run: |
           flutter build apk --release \
             --build-name=1.0.${{ github.run_number }} \
             --build-number=${{ github.run_number }}
 
+      # Upload artifact
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-release-${{ github.run_id }}
+          name: app-release-${{ github.run_number }}
           path: build/app/outputs/flutter-apk/app-release.apk
