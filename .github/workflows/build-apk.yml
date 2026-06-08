@@ -22,8 +22,13 @@ jobs:
           flutter-version: "3.22.0"
           channel: stable
 
-      # ❌ HAPUS flutter create
-      # Android HARUS dari repo, bukan CI generate
+      - name: Create Android platform
+        run: flutter create --platforms android --project-name katalog .
+
+      - name: Inject permissions
+        run: |
+          sed -i 's/<application/<uses-permission android:name="android.permission.INTERNET"\/>\n    <uses-permission android:name="android.permission.CAMERA"\/>\n    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"\/>\n    <application/' android/app/src/main/AndroidManifest.xml
+          sed -i 's/<application/<application android:usesCleartextTraffic="true"/' android/app/src/main/AndroidManifest.xml
 
       - name: Fix version
         run: |
@@ -34,6 +39,7 @@ jobs:
 
       - name: Decode Keystore
         run: |
+          mkdir -p android/app
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/release-key.jks
 
       - name: Create key.properties
